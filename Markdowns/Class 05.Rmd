@@ -1,0 +1,74 @@
+---
+title: "Class 05"
+author: "Peter Franz"
+date: "2026-09-09"
+output:
+  html_document:
+  toc: true
+  toc_float: true
+  numbered_sections: true
+  code_download: true
+  code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Game 01: Subsetting Lists
+
+```{r game01}
+campus = jsonlite::fromJSON("https://isa401-find-your-seat.vercel.app/campus.json")
+
+names(campus) #shows the named elements within a list/vector or the columns in a data frame
+fsb = campus$Farmer # saving the named farmer list in FSB
+# equivalent campus [['Farmer']] by name or campus [[5]] by  position
+names(fsb)
+fsb$code
+names(fsb$floors)
+
+fsb[[8]][[3]] # fsb$floors
+#or (same thing)
+fsb[[8]]$`2`
+
+# level 2
+fsb$floors$"2"$sections #how many sections are on floor 2
+campus$Farmer$floors[["2"]]
+
+sec_floor = fsb[[8]]$`2`
+# level 3
+
+
+
+# ANSWER KEY
+campus = jsonlite::fromJSON(
+  "https://isa401-find-your-seat.vercel.app/campus.json")
+campus[["Farmer"]]$code                      # "MUFSB"
+campus$Farmer$floors[["2"]]$sections        # 80
+r = campus$Farmer$floors[["2"]]$rooms
+r$isa_sections[r$room == "2050"]             # 11
+```
+
+
+
+
+
+## Reading the Excel File
+
+```{r occupations}
+occupation = readxl::read_excel(
+  "../data/occupation.xlsx",
+  sheet = 5, # sheet = "Table 1.4"
+  skip = 1
+)
+# - when you subset in R drops these specific things
+# given that they are three, I put them in a vector
+# notice the "," after the parentheses
+# nothing after the comma which means all columns
+# instead of that space --> 1:7
+occupation = occupation[-c(32,33,34), ]
+# alternatively
+occupation = occupation[1:31, ]
+```
+
