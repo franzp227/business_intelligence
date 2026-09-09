@@ -72,3 +72,23 @@ occupation = occupation[-c(32,33,34), ]
 occupation = occupation[1:31, ]
 ```
 
+
+## Read JSON Data
+```{r read_json}
+json_url = "https://data.cincinnati-oh.gov/resource/rvmt-pkmq.json?$limit=100"
+crashes_json = jsonlite::fromJSON(json_url)
+dplyr::glimpse(
+  crashes_json[, c("crashdate", "dayofweek",
+                   "crashseverity", "age")])
+```
+
+
+## Game 02
+```{r game_02}
+logins = readr::read_csv("https://isa401-import-heist.vercel.app/api/stage1")
+
+log = jsonlite::fromJSON("https://isa401-import-heist.vercel.app/api/stage2?key=smithj31&seat=R1-2&s=B")
+log$events
+jsonlite::fromJSON("https://isa401-import-heist.vercel.app/api/finish?code=6&seat=R1-2&s=B")
+```
+
