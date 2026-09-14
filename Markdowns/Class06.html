@@ -11,9 +11,9 @@
 
 <meta name="author" content="Peter Franz" />
 
-<meta name="date" content="2026-08-31" />
+<meta name="date" content="2026-09-14" />
 
-<title>Class 03 - R Basics</title>
+<title>class06</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -1587,41 +1587,62 @@ border-radius: 0px;
 
 
 
-<h1 class="title toc-ignore">Class 03 - R Basics</h1>
+<h1 class="title toc-ignore">class06</h1>
 <h4 class="author">Peter Franz</h4>
-<h4 class="date">2026-08-31</h4>
+<h4 class="date">2026-09-14</h4>
 
 </div>
 
 
-<div id="cincy-crash-data" class="section level1" number="1">
-<h1><span class="header-section-number">1</span> Cincy Crash Data</h1>
-<pre class="r"><code>crashes_per_day = 30125 / 365
-crashes_per_day</code></pre>
-<pre><code>## [1] 82.53425</code></pre>
-<pre class="r"><code>crashes_by_day = c(2020, 2241, 2327, 2285,
-                   2380, 1866, 1664)
-names(crashes_by_day) = c(&quot;Mon&quot;, &quot;Tue&quot;, &quot;Wed&quot;, &quot;Thu&quot;,
-                          &quot;Fri&quot;, &quot;Sat&quot;, &quot;Sun&quot;)
-crashes_by_day &gt; 2100</code></pre>
-<pre><code>##   Mon   Tue   Wed   Thu   Fri   Sat   Sun 
-## FALSE  TRUE  TRUE  TRUE  TRUE FALSE FALSE</code></pre>
-<div id="type-of-crashes_by_day" class="section level2" number="1.1">
-<h2><span class="header-section-number">1.1</span> Type of
-<code>crashes_by_day</code></h2>
-<pre class="r"><code>typeof(crashes_by_day)</code></pre>
-<pre><code>## [1] &quot;double&quot;</code></pre>
-<pre class="r"><code>crashes_by_day_int = c(2020L, 2241L, 2327L, 2285L,
-                   2380L, 1866L, 1664L)
-names(crashes_by_day_int) = c(&quot;Mon&quot;, &quot;Tue&quot;, &quot;Wed&quot;, &quot;Thu&quot;,
-                          &quot;Fri&quot;, &quot;Sat&quot;, &quot;Sun&quot;)
-
-typeof(crashes_by_day_int)</code></pre>
-<pre><code>## [1] &quot;integer&quot;</code></pre>
+<div id="hw-04" class="section level2" number="0.1">
+<h2><span class="header-section-number">0.1</span> HW 04</h2>
 </div>
+<div id="kahoot-02" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Kahoot 02</h1>
+<pre class="r"><code>run = readr::read_csv(&quot;https://isa401-find-your-seat.vercel.app/api/export?section=A&amp;run=13&quot;)</code></pre>
+<pre><code>## Rows: 157 Columns: 10
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr  (5): section, track, seat, table, level_name
+## dbl  (4): run, level, seconds, rank
+## dttm (1): reached_at
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>dplyr::glimpse(run)</code></pre>
+<pre><code>## Rows: 157
+## Columns: 10
+## $ section    &lt;chr&gt; &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;,…
+## $ run        &lt;dbl&gt; 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13,…
+## $ track      &lt;chr&gt; &quot;opener&quot;, &quot;opener&quot;, &quot;opener&quot;, &quot;opener&quot;, &quot;opener&quot;, &quot;opener&quot;,…
+## $ seat       &lt;chr&gt; &quot;R2-5&quot;, &quot;L1-2&quot;, &quot;L2-3&quot;, &quot;R3-6&quot;, &quot;L2-2&quot;, &quot;R1-1&quot;, &quot;L1-7&quot;, &quot;R3…
+## $ table      &lt;chr&gt; &quot;R2&quot;, &quot;L1&quot;, &quot;L2&quot;, &quot;R3&quot;, &quot;L2&quot;, &quot;R1&quot;, &quot;L1&quot;, &quot;R3&quot;, &quot;L3&quot;, &quot;R1&quot;,…
+## $ level      &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ level_name &lt;chr&gt; &quot;seat picked&quot;, &quot;seat picked&quot;, &quot;seat picked&quot;, &quot;seat picked&quot;,…
+## $ reached_at &lt;dttm&gt; 2026-09-09 12:26:18, 2026-09-09 12:35:06, 2026-09-09 12:35…
+## $ seconds    &lt;dbl&gt; 0, 529, 534, 540, 541, 547, 548, 550, 550, 551, 552, 554, 5…
+## $ rank       &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…</code></pre>
+</div>
+<div id="scout.db-intstall" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Scout.db intstall</h1>
+<pre class="r"><code>con = DBI::dbConnect(RSQLite::SQLite(),
+                     &quot;data/scout.db&quot;)
+DBI::dbListTables(con)</code></pre>
+<pre><code>## [1] &quot;scout_postings&quot; &quot;scout_runs&quot;</code></pre>
+<pre class="r"><code>postings = DBI::dbReadTable(con, &quot;scout_postings&quot;)
+DBI::dbDisconnect(con)
+dplyr::glimpse(postings[, c(&quot;title&quot;, &quot;company&quot;,
+  &quot;location_state&quot;, &quot;remote&quot;, &quot;skills_json&quot;)])</code></pre>
+<pre><code>## Rows: 1,891
+## Columns: 5
+## $ title          &lt;chr&gt; &quot;Data Analyst - Remote&quot;, &quot;Business Analyst / Product Ow…
+## $ company        &lt;chr&gt; &quot;UnitedHealth Group&quot;, &quot;Anza Mortgage Insurance Corporat…
+## $ location_state &lt;chr&gt; &quot;GA&quot;, &quot;NC&quot;, &quot;TX&quot;, &quot;CA&quot;, &quot;TX&quot;, &quot;NC&quot;, &quot;IL&quot;, &quot;GA&quot;, &quot;IN&quot;, &quot;…
+## $ remote         &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0…
+## $ skills_json    &lt;chr&gt; &quot;[{\&quot;skillId\&quot;:\&quot;sql\&quot;,\&quot;importance\&quot;:\&quot;required\&quot;},{\&quot;…</code></pre>
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNsYXNzIDAzIC0gUiBCYXNpY3MiDQphdXRob3I6ICJQZXRlciBGcmFueiINCmRhdGU6ICIyMDI2LTA4LTMxIg0Kb3V0cHV0OiANCiAgaHRtbF9kb2N1bWVudDoNCiAgICB0b2M6IHRydWUNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBudW1iZXJfc2VjdGlvbnM6IHRydWUNCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCiAgICBjb2RlX2Rvd25sb2FkOiB0cnVlDQoNCi0tLQ0KDQpgYGB7ciBzZXR1cCwgaW5jbHVkZT1GQUxTRX0NCmtuaXRyOjpvcHRzX2NodW5rJHNldChlY2hvID0gVFJVRSkNCmBgYA0KDQojIENpbmN5IENyYXNoIERhdGENCg0KYGBge3IgY2luY3lfY3Jhc2hlc30NCmNyYXNoZXNfcGVyX2RheSA9IDMwMTI1IC8gMzY1DQpjcmFzaGVzX3Blcl9kYXkNCg0KY3Jhc2hlc19ieV9kYXkgPSBjKDIwMjAsIDIyNDEsIDIzMjcsIDIyODUsDQogICAgICAgICAgICAgICAgICAgMjM4MCwgMTg2NiwgMTY2NCkNCm5hbWVzKGNyYXNoZXNfYnlfZGF5KSA9IGMoIk1vbiIsICJUdWUiLCAiV2VkIiwgIlRodSIsDQogICAgICAgICAgICAgICAgICAgICAgICAgICJGcmkiLCAiU2F0IiwgIlN1biIpDQpjcmFzaGVzX2J5X2RheSA+IDIxMDANCmBgYA0KDQoNCg0KIyMgVHlwZSBvZiBgY3Jhc2hlc19ieV9kYXlgDQoNCmBgYHtyIHR5cGVvZl92ZWN9DQp0eXBlb2YoY3Jhc2hlc19ieV9kYXkpDQoNCmNyYXNoZXNfYnlfZGF5X2ludCA9IGMoMjAyMEwsIDIyNDFMLCAyMzI3TCwgMjI4NUwsDQogICAgICAgICAgICAgICAgICAgMjM4MEwsIDE4NjZMLCAxNjY0TCkNCm5hbWVzKGNyYXNoZXNfYnlfZGF5X2ludCkgPSBjKCJNb24iLCAiVHVlIiwgIldlZCIsICJUaHUiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAiRnJpIiwgIlNhdCIsICJTdW4iKQ0KDQp0eXBlb2YoY3Jhc2hlc19ieV9kYXlfaW50KQ0KYGBgDQoNCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogImNsYXNzMDYiDQphdXRob3I6ICJQZXRlciBGcmFueiINCmRhdGU6ICIyMDI2LTA5LTE0Ig0Kb3V0cHV0Og0KICBodG1sX2RvY3VtZW50Og0KICAgIHRvYzogVFJVRQ0KICAgIHRvY19mbG9hdDogdHJ1ZQ0KICAgIG51bWJlcl9zZWN0aW9uczogdHJ1ZQ0KICAgIGNvZGVfZG93bmxvYWQ6IHRydWUNCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCi0tLQ0KDQpgYGB7ciBzZXR1cCwgaW5jbHVkZT1GQUxTRX0NCmtuaXRyOjpvcHRzX2NodW5rJHNldChlY2hvID0gVFJVRSkNCmBgYA0KDQojIyBIVyAwNA0KDQojIEthaG9vdCAwMg0KYGBge3J9DQpydW4gPSByZWFkcjo6cmVhZF9jc3YoImh0dHBzOi8vaXNhNDAxLWZpbmQteW91ci1zZWF0LnZlcmNlbC5hcHAvYXBpL2V4cG9ydD9zZWN0aW9uPUEmcnVuPTEzIikNCmRwbHlyOjpnbGltcHNlKHJ1bikNCmBgYA0KDQojIFNjb3V0LmRiIGludHN0YWxsDQpgYGB7cn0NCmNvbiA9IERCSTo6ZGJDb25uZWN0KFJTUUxpdGU6OlNRTGl0ZSgpLA0KICAgICAgICAgICAgICAgICAgICAgImRhdGEvc2NvdXQuZGIiKQ0KREJJOjpkYkxpc3RUYWJsZXMoY29uKQ0KcG9zdGluZ3MgPSBEQkk6OmRiUmVhZFRhYmxlKGNvbiwgInNjb3V0X3Bvc3RpbmdzIikNCkRCSTo6ZGJEaXNjb25uZWN0KGNvbikNCmRwbHlyOjpnbGltcHNlKHBvc3RpbmdzWywgYygidGl0bGUiLCAiY29tcGFueSIsDQogICJsb2NhdGlvbl9zdGF0ZSIsICJyZW1vdGUiLCAic2tpbGxzX2pzb24iKV0pDQpgYGANCg0K</div>
 
 
 </div>
@@ -1659,7 +1680,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeSourceEmbed("Class 03 - R Basics.Rmd");
+  window.initializeSourceEmbed("Class06.Rmd");
   window.initializeCodeFolding("show" === "show");
 });
 </script>

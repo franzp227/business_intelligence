@@ -1,0 +1,59 @@
+---
+title: "class06"
+author: "Peter Franz"
+date: "2026-09-14"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: true
+    number_sections: true
+    code_download: true
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## HW 04
+
+# Kahoot 02
+```{r}
+run = readr::read_csv("https://isa401-find-your-seat.vercel.app/api/export?section=A&run=13")
+dplyr::glimpse(run)
+```
+
+# Scout.db intstall
+```{r}
+con = DBI::dbConnect(RSQLite::SQLite(),
+                     "data/scout.db")
+DBI::dbListTables(con)
+postings = DBI::dbReadTable(con, "scout_postings")
+DBI::dbDisconnect(con)
+dplyr::glimpse(postings[, c("title", "company",
+  "location_state", "remote", "skills_json")])
+```
+
+## starting app.R
+```{r}
+# apps/job_scout_chat/app.R
+library(querychat)
+
+con = DBI::dbConnect(RSQLite::SQLite(), "data/scout.db")
+
+client = ellmer::chat_openai(
+  model  = "gpt-5.6-luna",
+  params = ellmer::params(reasoning_effort = "none")
+)
+
+qc = querychat(
+  con, "scout_postings",
+  client   = client,
+  tools    = c("filter", "query", "visualize"),
+  greeting = "Ask me about the 1,891 job postings
+              ChatISA Job Scout collected."
+)
+
+qc$app_obj()
+```
+
