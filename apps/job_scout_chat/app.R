@@ -1,5 +1,7 @@
-# ISA 401 Job Scout Chat: ask questions, get SQL, a table, or a chart back
+# apps/job_scout_chat/app.R
 library(querychat)
+
+install.packages("querychat", dependencies = T)
 
 con = DBI::dbConnect(RSQLite::SQLite(), "data/scout.db")
 
@@ -8,11 +10,13 @@ client = ellmer::chat_openai(
   params = ellmer::params(reasoning_effort = "none")
 )
 
-qc = querychat(
+qc = querychat::querychat(
   con, "scout_postings",
   client   = client,
-  tools    = c("filter", "query", "visualize"),  # visualize: charts in the chat (needs ggsql)
-  greeting = "Ask me about the 1,891 job postings ChatISA Job Scout collected."
+  tools    = c("filter", "query", "visualize"),
+  greeting = "Ask me about the 1,891 job postings
+              ChatISA Job Scout collected."
 )
 
+qc$app
 qc$app_obj()

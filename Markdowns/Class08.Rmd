@@ -1,0 +1,94 @@
+---
+title: "Class08"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r api_intro}
+httr2::request("https://data.cincinnati-oh.gov/resource/rvmt-pkmq.json") |>
+  httr2::req_url_query("$limit" = 5) |>
+  httr2::req_perform() |>
+  httr2::resp_body_string() |>
+  jsonlite::fromJSON()
+
+Sys.getenv("FRED_API_KEY")   # shows the key, so: Console only
+usethis::use_git_ignore(".Renviron")
+```
+
+## Fred ex
+
+```{r request}
+httr2::request("https://api.stlouisfed.org/fred/series/observations") |>
+  httr2::req_url_query(
+    series_id = "IHLIDXUSOH",
+    api_key = Sys.getenv("FRED_API_KEY"),
+    file_type = "json"
+  ) |>
+   # nothing has been sent yet
+  httr2::req_perform() |>
+  httr2::resp_body_string() |>
+  jsonlite::fromJSON() -> ohio_jobs
+jobs_df = ohio_jobs$observations
+
+# to get data from sept 1, 2026
+
+# (a) to get all the data and then filter the rows that I ant
+## not the most efficient but correct
+dplyr::glimpse(jobs_df) # realized that datae is a character
+jobs_df |>
+  # therofre, i overworote date into a date column
+  dplyr::mutate(
+    data = lubridate::ymd(date)
+  ) |>
+  # used filter to fina ll dates >= 9/1/26
+  dplyr::filter(date >= '2026-09-01') -> jobs_df_mod
+
+# b) Use the API since it had observation_start
+httr2::request("https://api.stlouisfed.org/fred/series/observations") |>
+  httr2::req_url_query(
+    series_id = "IHLIDXUSOH",
+    api_key = Sys.getenv("FRED_API_KEY"),
+    file_type = "json",
+    observation_start="2026-09-01"
+  ) |>
+  # nothing has been sent yet
+  httr2::req_perform() |>
+  httr2::resp_body_string() |>
+  jsonlite::fromJSON()
+
+ohio_jobs_sep_2026_df = ohio_jobs_sep_2026$observations
+```
+
+
+```{r USA_JOBS}
+
+httr2::request("https://data.usajobs.gov/api/search") |>
+  httr2::req_url_query(Keyword = "Data Analyst", ResultsPerPage = 500) |>
+  httr2::req_headers(
+    Host = "data.usajobs.gov",
+    "User-Agent" = "franzpi@miamioh.edu",
+    "Authorization-Key" = Sys.getenv("USAJOBS_API_KEY")
+  ) |>
+  httr2::req_perform() |>
+  httr2::resp_body_string() |>
+  jsonlite::fromJSON(flatten = TRUE) -> usa_jobs_list
+
+usajobs_df = usa_jobs_list$SearchResult
+
+jobs_small = usajobs_df |>
+  dplyr::select(
+    title = MatchedObjectDescriptor.PositionTitle,
+    department = MatchedObjectDescriptor.DepartmentName,
+    agency = MatchedObjectDescriptor.OrganizationName,
+    location = MatchedObjectDescriptor.PositionLocationDisplay,
+    closes = MatchedObjectDescriptor.ApplicationCloseDate
+  )
+
+
+index_data_analyst = jobs_small$title |>
+  string::str_detet(pattern = 'Data Analyst|Data Analytics')
+```
+
+
+
