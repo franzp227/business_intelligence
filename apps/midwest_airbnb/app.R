@@ -1,8 +1,6 @@
 # apps/job_scout_chat/app.R
 library(querychat)
 
-install.packages("querychat", dependencies = T)
-
 con = DBI::dbConnect(RSQLite::SQLite(), "data/midwest_airbnb.db")
 
 client = ellmer::chat_openai(
@@ -19,3 +17,5 @@ qc = querychat::querychat(
   extra_instructions = "data/extra_instructions.md"
 )
 
+qc$app
+qc$app_obj()
