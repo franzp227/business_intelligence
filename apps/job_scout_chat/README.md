@@ -13,6 +13,15 @@ short_description: Ask questions about ChatISA Job Scout postings
 # App Link
 
 **Live app:** https://midwest-airbnb-chat-3rgi.onrender.com
+ 
+## Question 1: Name every listing in the Lincoln Park neighborhood of Chicago, owned by a superhost:
+![Lincoln Park Superhosts](apps/midwest_airbnb/ExQuestion1.png)
+
+## Question 2: How many listings in Columbus have an estimated revenue in the last 365 days of less than $10,000?
+![Columbus Low Revenue](apps/midwest_airbnb/ExQuestion2.png)
+
+## Question 3: What is the most expensive Airbnb in the Twin Cities with only one bedroom?
+![Expensive 1-Bedroom](apps/midwest_airbnb/ExQuestion3.png)
 
 # ISA 401 Job Scout Chat
 
