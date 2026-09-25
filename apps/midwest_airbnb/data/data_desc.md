@@ -25,7 +25,7 @@
 | `neighbourhood` | text | The neighbourhood as geocoded using the latitude and longitude against neighborhoods as defined by open or public digital shapefiles. |
 | `latitude` | numeric | Uses the World Geodetic System (WGS84) projection for latitude and longitude. |
 | `longitude` | numeric | Uses the World Geodetic System (WGS84) projection for latitude and longitude. |
-| `property_type` | Self selected property type. Hotels and Bed and Breakfasts are described as such by their hosts in this field. |
+| `property_type` | text | Self selected property type. Hotels and Bed and Breakfasts are described as such by their hosts in this field. |
 | `accommodates` | integer | The maximum capacity of the listing |
 | `bedrooms` | integer | The number of bedrooms |
 | `beds` | integer | The number of beds |
