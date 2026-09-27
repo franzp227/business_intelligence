@@ -357,7 +357,326 @@ display: none;
 </div>
 
 
+<pre class="r"><code>con = DBI::dbConnect(RSQLite::SQLite(), &quot;../data/midwest_airbnb_extended.db&quot;)
+listings     = DBI::dbReadTable(con, &quot;listings&quot;) |&gt; tibble::as_tibble()
+availability = DBI::dbReadTable(con, &quot;availability_monthly&quot;) |&gt; tibble::as_tibble()
+reviews      = DBI::dbReadTable(con, &quot;reviews_monthly&quot;) |&gt; tibble::as_tibble()
+DBI::dbDisconnect(con)</code></pre>
+<div id="task-1" class="section level2">
+<h2>Task 1</h2>
+<pre class="r"><code>host_counts &lt;- listings |&gt;
+  dplyr::count(host_id, name = &quot;host_listing_count&quot;)
+listings_with_counts &lt;- listings |&gt;
+  dplyr::left_join(host_counts, by = &quot;host_id&quot;)
 
+A1 &lt;- listings_with_counts |&gt;
+  dplyr::filter(host_listing_count &gt;= 10) |&gt;
+  dplyr::distinct(host_id) |&gt;
+  dplyr::summarize(hosts_10_plus = dplyr::n())
+
+A2 &lt;- listings_with_counts |&gt;
+  dplyr::filter(city == &quot;Chicago&quot;) |&gt;
+  dplyr::summarize(
+    percent_held_by_10_plus =
+      mean(host_listing_count &gt;= 10) * 100
+  )
+
+A1</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   hosts_10_plus
+##           &lt;int&gt;
+## 1           198</code></pre>
+<pre class="r"><code>A2</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   percent_held_by_10_plus
+##                     &lt;dbl&gt;
+## 1                    31.9</code></pre>
+</div>
+<div id="task-2" class="section level2">
+<h2>Task 2</h2>
+<pre class="r"><code>family_price &lt;- listings |&gt;
+  dplyr::filter(
+    room_type == &quot;Entire home/apt&quot;,
+    accommodates &gt;= 4,
+    number_of_reviews &gt;= 10,
+    review_scores_rating &gt;= 4.8
+  ) |&gt;
+  dplyr:: mutate(price_per_person = price / accommodates) |&gt;
+  dplyr::group_by(city, neighbourhood) |&gt;
+  dplyr::summarize(
+    median_family_price = median(price_per_person),
+    n = dplyr::n()
+  ) |&gt;
+  dplyr::filter(n &gt;= 20)</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by city and neighbourhood.
+## ℹ Output is grouped by city.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(city, neighbourhood))` for per-operation grouping
+##   (`?dplyr::dplyr_by`) instead.</code></pre>
+<pre class="r"><code>family_price |&gt;
+  dplyr::filter(city == &quot;Columbus&quot;) |&gt;
+  dplyr::arrange(median_family_price)</code></pre>
+<pre><code>## # A tibble: 8 × 4
+## # Groups:   city [1]
+##   city     neighbourhood         median_family_price     n
+##   &lt;chr&gt;    &lt;chr&gt;                               &lt;dbl&gt; &lt;int&gt;
+## 1 Columbus North Linden                         32.6    20
+## 2 Columbus South Linden                         41      24
+## 3 Columbus Downtown                             41.8    22
+## 4 Columbus Near East                            42.8    82
+## 5 Columbus Near North/University                43.9   302
+## 6 Columbus West Olentangy                       45      35
+## 7 Columbus Near South                           46     129
+## 8 Columbus Clintonville                         47.1    53</code></pre>
+</div>
+<div id="task-3" class="section level2">
+<h2>Task 3</h2>
+<pre class="r"><code>median_revenue &lt;- listings |&gt;
+  dplyr::group_by(city, room_type) |&gt;
+  dplyr::summarize(
+    dplyr::across(
+      c(price, reviews_per_month, estimated_revenue_l365d),
+      ~median(.x, na.rm = TRUE)
+    )
+  )</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by city and room_type.
+## ℹ Output is grouped by city.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(city, room_type))` for per-operation grouping
+##   (`?dplyr::dplyr_by`) instead.</code></pre>
+<pre class="r"><code>median_revenue |&gt;
+  dplyr::filter(
+    city == &quot;Twin Cities&quot;,
+    room_type == &quot;Entire home/apt&quot;
+  )</code></pre>
+<pre><code>## # A tibble: 1 × 5
+## # Groups:   city [1]
+##   city        room_type       price reviews_per_month estimated_revenue_l365d
+##   &lt;chr&gt;       &lt;chr&gt;           &lt;dbl&gt;             &lt;dbl&gt;                   &lt;dbl&gt;
+## 1 Twin Cities Entire home/apt  268.              1.46                   19619</code></pre>
+</div>
+<div id="task-4" class="section level2">
+<h2>Task 4</h2>
+<pre class="r"><code>top_concentration &lt;- listings |&gt;
+  dplyr::group_by(city) |&gt;
+  dplyr::arrange(
+    dplyr::desc(estimated_revenue_l365d),
+    .by_group = TRUE
+  ) |&gt;
+  dplyr::mutate(
+    top_10 = dplyr::row_number() &lt;= ceiling(0.10 * dplyr::n())
+  ) |&gt;
+  dplyr::ungroup()
+
+top_concentration |&gt;
+  dplyr::filter(city == &quot;Columbus&quot;) |&gt;
+  dplyr::summarize(
+    top_10_percent =
+      sum(estimated_revenue_l365d[top_10], na.rm = TRUE) /
+      sum(estimated_revenue_l365d, na.rm = TRUE) * 100
+  )</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   top_10_percent
+##            &lt;dbl&gt;
+## 1           36.1</code></pre>
+</div>
+<div id="task-5" class="section level2">
+<h2>Task 5</h2>
+<pre class="r"><code>october_availability &lt;- availability |&gt;
+  dplyr::filter(month == &quot;2026-10&quot;)
+
+entire_homes &lt;- listings |&gt;
+  dplyr::filter(room_type == &quot;Entire home/apt&quot;)
+
+year_ahead &lt;- entire_homes |&gt;
+  dplyr::left_join(october_availability, by = &quot;id&quot;) |&gt;
+  dplyr::mutate(
+    mostly_taken = nights_available &lt; 0.5 * nights_in_month
+  )
+
+year_ahead |&gt;
+  dplyr::group_by(city) |&gt;
+  dplyr::summarize(
+    mostly_taken_share = mean(mostly_taken, na.rm = TRUE)
+  ) |&gt;
+  dplyr::arrange(mostly_taken_share)</code></pre>
+<pre><code>## # A tibble: 3 × 2
+##   city        mostly_taken_share
+##   &lt;chr&gt;                    &lt;dbl&gt;
+## 1 Columbus                 0.190
+## 2 Twin Cities              0.200
+## 3 Chicago                  0.218</code></pre>
+</div>
+<div id="task-6" class="section level2">
+<h2>Task 6</h2>
+<pre class="r"><code>demand_by_season &lt;- reviews |&gt;
+  dplyr::filter(
+    month &gt;= &quot;2025-07&quot;, month &lt;= &quot;2026-06&quot;
+  ) |&gt;
+  dplyr::left_join(listings |&gt;
+    dplyr::select(id, city),
+    by = &quot;id&quot;
+  ) |&gt;
+  dplyr::group_by(city, month) |&gt;
+  dplyr::summarize(
+    total_reviews = sum(reviews, na.rm = TRUE)
+  )</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by city and month.
+## ℹ Output is grouped by city.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(city, month))` for per-operation grouping
+##   (`?dplyr::dplyr_by`) instead.</code></pre>
+<pre class="r"><code>twin_cities_demand &lt;- demand_by_season |&gt;
+  dplyr::filter(city == &quot;Twin Cities&quot;) |&gt;
+  dplyr::arrange(dplyr::desc(total_reviews))
+
+twin_cities_demand</code></pre>
+<pre><code>## # A tibble: 12 × 3
+## # Groups:   city [1]
+##    city        month   total_reviews
+##    &lt;chr&gt;       &lt;chr&gt;           &lt;int&gt;
+##  1 Twin Cities 2025-08          7399
+##  2 Twin Cities 2025-07          7072
+##  3 Twin Cities 2026-05          6945
+##  4 Twin Cities 2025-09          6330
+##  5 Twin Cities 2025-10          6318
+##  6 Twin Cities 2026-06          5729
+##  7 Twin Cities 2025-11          5165
+##  8 Twin Cities 2026-04          5143
+##  9 Twin Cities 2026-03          4459
+## 10 Twin Cities 2025-12          3962
+## 11 Twin Cities 2026-01          3699
+## 12 Twin Cities 2026-02          3119</code></pre>
+<pre class="r"><code>twin_cities_demand |&gt;
+  dplyr::summarize(
+    quiet_month_ratio =
+      max(total_reviews) / min(total_reviews)
+  )</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##   city        quiet_month_ratio
+##   &lt;chr&gt;                   &lt;dbl&gt;
+## 1 Twin Cities              2.37</code></pre>
+</div>
+<div id="task-7" class="section level2">
+<h2>Task 7</h2>
+<pre class="r"><code>superhost_summary &lt;- listings |&gt;
+  dplyr::filter(
+    room_type == &quot;Entire home/apt&quot;,
+    !is.na(host_is_superhost)
+  ) |&gt;
+  dplyr::mutate(
+    host_type = dplyr::if_else(
+      host_is_superhost == &quot;t&quot;, &quot;Superhost&quot;, &quot;Other&quot;
+    )
+  ) |&gt;
+  dplyr::group_by(city, host_type) |&gt;
+  dplyr::summarize(
+    median_price = median(price, na.rm = TRUE),
+    median_rating = median(review_scores_rating, na.rm = TRUE)
+  )</code></pre>
+<pre><code>## `summarise()` has regrouped the output.
+## ℹ Summaries were computed grouped by city and host_type.
+## ℹ Output is grouped by city.
+## ℹ Use `summarise(.groups = &quot;drop_last&quot;)` to silence this message.
+## ℹ Use `summarise(.by = c(city, host_type))` for per-operation grouping
+##   (`?dplyr::dplyr_by`) instead.</code></pre>
+<pre class="r"><code>superhost_summary</code></pre>
+<pre><code>## # A tibble: 6 × 4
+## # Groups:   city [3]
+##   city        host_type median_price median_rating
+##   &lt;chr&gt;       &lt;chr&gt;            &lt;dbl&gt;         &lt;dbl&gt;
+## 1 Chicago     Other             248           4.77
+## 2 Chicago     Superhost         292.          4.92
+## 3 Columbus    Other             184.          4.75
+## 4 Columbus    Superhost         225           4.92
+## 5 Twin Cities Other             268.          4.85
+## 6 Twin Cities Superhost         267.          4.94</code></pre>
+<pre class="r"><code>superhost_premium &lt;- superhost_summary |&gt;
+  dplyr::select(city, host_type, median_price) |&gt;
+  tidyr::pivot_wider(
+    names_from = host_type,
+    values_from = median_price
+  ) |&gt;
+  dplyr::mutate(
+    premium = Superhost - Other
+  )
+
+superhost_premium</code></pre>
+<pre><code>## # A tibble: 3 × 4
+## # Groups:   city [3]
+##   city        Other Superhost premium
+##   &lt;chr&gt;       &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Chicago      248       292.   43.8 
+## 2 Columbus     184.      225    40.5 
+## 3 Twin Cities  268.      267.   -1.38</code></pre>
+</div>
+<div id="task-8" class="section level2">
+<h2>Task 8</h2>
+<pre class="r"><code>lost_listings &lt;- listings |&gt;
+  dplyr::anti_join(
+    availability,
+    by = &quot;id&quot;
+  )
+
+lost_listings |&gt;
+  dplyr::summarize(
+    missing_availability = dplyr::n()
+  )</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   missing_availability
+##                  &lt;int&gt;
+## 1                  456</code></pre>
+<pre class="r"><code>lost_listings |&gt;
+  dplyr::count(city) |&gt;
+  dplyr::arrange(dplyr::desc(n))</code></pre>
+<pre><code>## # A tibble: 3 × 2
+##   city            n
+##   &lt;chr&gt;       &lt;int&gt;
+## 1 Chicago       267
+## 2 Twin Cities   120
+## 3 Columbus       69</code></pre>
+</div>
+<div id="b2" class="section level2">
+<h2>B2</h2>
+<pre class="r"><code>Task_1 &lt;- listings_with_counts |&gt;
+  dplyr::filter(
+    city %in% c(&quot;Chicago&quot;, &quot;Columbus&quot;, &quot;Twin Cities&quot;)
+  ) |&gt;
+  dplyr::group_by(city) |&gt;
+  dplyr::summarize(
+    percent_held_by_10_plus =
+      mean(host_listing_count &gt;= 10) * 100
+  )
+
+Task_2 &lt;- listings |&gt;
+  dplyr::group_by(city) |&gt;
+  dplyr::arrange(
+    dplyr::desc(estimated_revenue_l365d),
+    .by_group = TRUE
+  ) |&gt;
+  dplyr::mutate(
+    top_10 = dplyr::row_number() &lt;= ceiling(0.10 * dplyr::n())
+  ) |&gt;
+  dplyr::summarize(
+    share_top_10_revenue =
+      sum(estimated_revenue_l365d[top_10], na.rm = TRUE) /
+      sum(estimated_revenue_l365d, na.rm = TRUE) * 100
+  )
+
+B2 &lt;- Task_1 |&gt;
+  dplyr::left_join(Task_2, by = &quot;city&quot;)
+
+B2</code></pre>
+<pre><code>## # A tibble: 3 × 3
+##   city        percent_held_by_10_plus share_top_10_revenue
+##   &lt;chr&gt;                         &lt;dbl&gt;                &lt;dbl&gt;
+## 1 Chicago                        31.9                 40.7
+## 2 Columbus                       37.1                 36.1
+## 3 Twin Cities                    17.2                 40.3</code></pre>
+</div>
 
 
 
