@@ -1,0 +1,36 @@
+---
+title: "hw04"
+author: "Peter Franz"
+date: "2026-09-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+con = DBI::dbConnect(RSQLite::SQLite(), "../data/midwest_airbnb.db")
+listings = DBI::dbReadTable(con, "listings")
+
+# Question 1
+nrow(listings)
+listings
+
+# Question 2
+table(listings$city)
+
+# Question 3
+chicago = listings[listings$city == "Chicago", ]
+chicago[which.max(chicago$price), ]
+
+# Question 4
+length(unique(chicago$neighbourhood))
+
+# Question 5
+sum(listings$host_is_superhost == "t", na.rm = TRUE)
+
+# Questoin 6
+sum(listings$price > 1000, na.rm = TRUE)
+```
+
