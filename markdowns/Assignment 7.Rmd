@@ -1,0 +1,130 @@
+---
+title: 'Assignment 07: Web Scraping the FSB Directory'
+author: "Peter Franz"
+date: "2026-10-06"
+output:
+  html_document:
+    toc: TRUE
+    toc_float: true
+    number_sections: true
+    code_download: true
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Initial Accountancy Scrape
+
+```{r accountancy_initial}
+accountancy_url = "https://miamioh.edu/fsb/directory/?up=/query/all/all/Accountancy/all"
+
+accountancy_page = rvest::read_html(accountancy_url)
+accountancy_page
+
+accountancy_rows = accountancy_page |>
+  rvest::html_elements("tr")
+length(accountancy_rows)
+
+accountancy_names = accountancy_rows |>
+  rvest::html_element("strong a") |>
+  rvest::html_text()
+accountancy_names = accountancy_names[-1]
+head(accountancy_names)
+
+accountancy_positions = accountancy_rows |>
+  rvest::html_element("i") |>
+  rvest::html_text2()
+accountancy_positions = accountancy_positions[-1]
+accountancy_positions = trimws(accountancy_positions)
+head(accountancy_positions)
+
+accountancy_websites = accountancy_rows |>
+  rvest::html_element("strong a") |>
+  rvest::html_attr("href")
+accountancy_websites = accountancy_websites[-1]
+
+head(accountancy_websites)
+
+accountancy_departments = accountancy_rows |>
+  rvest::html_element("td:first-child") |>
+  rvest::html_text2()
+accountancy_departments = accountancy_departments[-1]
+head(accountancy_departments)
+
+length(accountancy_names)
+length(accountancy_positions)
+length(accountancy_websites)
+length(accountancy_departments)
+```
+
+## Making the Accountancy Data Frame
+
+```{r acc_data_frame}
+accountancy_df = data.frame(
+  department = accountancy_departments,
+  name = accountancy_names,
+  position = accountancy_positions,
+  website = accountancy_websites
+)
+
+head(accountancy_df)
+
+
+```
+
+## Making the Loop
+
+```{r loop}
+departments = c("Accountancy", "Economics", "Entrepreneurship", "Finance", "Information_Systems_and_Analytics", "Marketing", "Management"
+)
+
+fsb_df = data.frame()
+
+for (department in departments) {
+  directory_url = paste0(
+    "https://miamioh.edu/fsb/directory/?up=/query/all/all/",
+    department,
+    "/all"
+  )
+  webpage = rvest::read_html(directory_url)
+
+  rows = webpage |>
+    rvest::html_elements("tr")
+
+  names = rows |>
+    rvest::html_element("strong a") |>
+    rvest::html_text()
+
+  positions = rows |>
+    rvest::html_element("i") |>
+    rvest::html_text2()
+
+  websites = rows |>
+    rvest::html_element("strong a") |>
+    rvest::html_attr("href")
+
+  names = names[-1]
+  positions = positions[-1]
+  websites = websites[-1]
+
+  df = data.frame(
+    department = department,
+    name = names,
+    position = positions,
+    website = websites
+  )
+
+  fsb_df = rbind(fsb_df, df)
+}
+
+fsb_df$department[fsb_df$department == "Information_Systems_and_Analytics"] = "ISA"
+
+head(fsb_df)
+
+unique(fsb_df$department)
+
+nrow(fsb_df)
+```
+
