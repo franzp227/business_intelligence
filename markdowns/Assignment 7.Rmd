@@ -15,65 +15,6 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Initial Accountancy Scrape
-
-```{r accountancy_initial}
-accountancy_url = "https://miamioh.edu/fsb/directory/?up=/query/all/all/Accountancy/all"
-
-accountancy_page = rvest::read_html(accountancy_url)
-accountancy_page
-
-accountancy_rows = accountancy_page |>
-  rvest::html_elements("tr")
-length(accountancy_rows)
-
-accountancy_names = accountancy_rows |>
-  rvest::html_element("strong a") |>
-  rvest::html_text()
-accountancy_names = accountancy_names[-1]
-head(accountancy_names)
-
-accountancy_positions = accountancy_rows |>
-  rvest::html_element("i") |>
-  rvest::html_text2()
-accountancy_positions = accountancy_positions[-1]
-accountancy_positions = trimws(accountancy_positions)
-head(accountancy_positions)
-
-accountancy_websites = accountancy_rows |>
-  rvest::html_element("strong a") |>
-  rvest::html_attr("href")
-accountancy_websites = accountancy_websites[-1]
-
-head(accountancy_websites)
-
-accountancy_departments = accountancy_rows |>
-  rvest::html_element("td:first-child") |>
-  rvest::html_text2()
-accountancy_departments = accountancy_departments[-1]
-head(accountancy_departments)
-
-length(accountancy_names)
-length(accountancy_positions)
-length(accountancy_websites)
-length(accountancy_departments)
-```
-
-## Making the Accountancy Data Frame
-
-```{r acc_data_frame}
-accountancy_df = data.frame(
-  department = accountancy_departments,
-  name = accountancy_names,
-  position = accountancy_positions,
-  website = accountancy_websites
-)
-
-head(accountancy_df)
-
-
-```
-
 ## Making the Loop
 
 ```{r loop}
@@ -92,22 +33,20 @@ for (department in departments) {
 
   rows = webpage |>
     rvest::html_elements("tr")
+  
+  person_rows = rows[-1]
 
-  names = rows |>
+  names = person_rows |>
     rvest::html_element("strong a") |>
     rvest::html_text()
 
-  positions = rows |>
+  positions = person_rows |>
     rvest::html_element("i") |>
     rvest::html_text2()
 
-  websites = rows |>
+  websites = person_rows |>
     rvest::html_element("strong a") |>
     rvest::html_attr("href")
-
-  names = names[-1]
-  positions = positions[-1]
-  websites = websites[-1]
 
   df = data.frame(
     department = department,
