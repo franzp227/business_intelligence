@@ -1,0 +1,479 @@
+---
+title: "Exam 1 Prep"
+author: "Peter Franz"
+date: "2026-10-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 7 Prep - Multi-Page Scraping
+
+```{r one_webpage}
+isa_url = "https://bulletin.miamioh.edu/courses-instruction/isa"
+# holds the address
+# has to be in quotes since URLs are text
+
+isa_page = rvest::read_html(isa_url)
+    # readh_html() retrieves/parses the HTML - html specific
+    # isa_page stores the parsed page
+
+class(isa_page) # output IDing an HTML document
+
+isa_titles = isa_page |>
+  rvest::html_elements("p.courseblocktitle") |>
+    #searches an HTML document for elements matching a CSS selector
+    # p = HTML para element, . = indicates a CSS class, # courseblocktitle is the name of the class
+    # intepret as "find every paragraph with class courseblocktitle
+  rvest::html_text2()
+    # extracts HTML into ordinary text that R can use
+    # different from html_attr("href") - extracts an HTML attribute
+
+head(isa_titles) # displayed first 6 course titles
+length(isa_titles) # confirmed you extracted 50 course titles
+```
+
+```{r multiple departments}
+dept_abbrv = c("acc", "bus", "isa", "mkt")
+  # c() combines values into a vector (dept_abbrv)
+  # "quotation marks" indicate character strings
+
+courses_df = data.frame() # creates an empty data frame
+
+for (abbrv in dept_abbrv) { # begin code to be repeated
+  # for begins a loop, in = iterate through each value in vector
+  
+  bulletin_url = paste0(  # combines text without adding separators
+  "https://bulletin.miamioh.edu/courses-instruction/",
+  abbrv,
+  "/"
+)
+  webpage = rvest::read_html(bulletin_url)
+  
+  titles = webpage |>
+    rvest::html_elements("p.courseblocktitle") |>
+    rvest::html_text2()
+  
+  df = data.frame( # creates a data frame for the current dept
+      department = abbrv,
+      title = titles
+  )
+  
+  courses_df = rbind(courses_df, df)
+    # rbind = row bind - combines data frames vertically
+}
+
+nrow(courses_df) # total number of scraped course titles
+
+dplyr::count(courses_df, department)
+  # one row for each dept, its # of scraped courses
+head(courses_df)
+```
+
+```{r debugging_code}
+dept_abbrv = c("acc", "bus", "isa", "mkt")
+
+courses_df = data.frame()
+
+for (abbrv in dept_abbrv) {
+
+  bulletin_url = paste0(
+    "https://bulletin.miamioh.edu/courses-instruction/",
+    abbrv,
+    "/"
+  )
+
+  webpage = rvest::read_html(bulletin_url)
+
+  titles = webpage |>
+    rvest::html_elements("p.courseblocktitle") |>
+    rvest::html_text2()
+
+  df = data.frame(
+    department = abbrv,
+    title = titles
+  )
+
+  courses_df = df ## this is wrong, it replaces the accumulated results w/ current data on every interaction
+}
+
+dplyr::count(courses_df, department)
+```
+
+```{r 7_final_practice}
+dept_abbrv = c("acc", "bus", "isa", "mkt")
+  # c() combines values into a vector (dept_abbrv)
+courses_df = data.frame() # creates an empty data frame
+
+for (abbrv in dept_abbrv) { # begin code to be repeated
+  # for begins a loop, in = iterate through each value in vector
+  bulletin_url = paste0(
+  "https://bulletin.miamioh.edu/courses-instruction/",
+  abbrv,
+  "/")
+
+webpage = rvest::read_html(bulletin_url)
+
+  titles = webpage |>
+    rvest::html_elements("p.courseblocktitle") |>
+    # remember to add the pipe
+    rvest::html_text2()
+  
+  descs = webpage |>
+    rvest::html_elements("p.courseblockdesc") |>
+    rvest::html_text2()
+
+  print(c(abbrv, length(titles), length(descs)))
+
+  df = data.frame(
+    department = abbrv,
+    title = titles,
+    description = descs
+  )
+  
+  courses_df = rbind(courses_df, df)
+    # rbind = row bind - combines data frames vertically
+}
+
+nrow(courses_df) # total number of scraped course titles
+ncol(courses_df)
+dplyr::count(courses_df, department)
+  # one row for each dept, its # of scraped courses
+head(courses_df, 3)
+```
+
+
+## Question 6 Practice - Debugging AI-Written API requests
+
+```{r api_practice}
+crashes = httr2::request(
+  "https://data.cincinnati-oh.gov/resource/rvmt-pkmq.json"
+) |> # creates request to API endpoint
+  httr2::req_url_query("$limit" = 5) |> # adds parameters to URL
+  httr2::req_perform() |> # sends request to the server
+    # actually communicates with the server
+  httr2::resp_body_string() |> # extracts response body as text
+  jsonlite::fromJSON() # parses JSON into an R object
+
+dplyr::glimpse(crashes) # insepcts the returned data
+
+class(crashes)
+nrow(crashes)
+names(crashes)
+head(crashes)
+```
+
+```{r crash_example}
+recent_crashes = httr2::request(
+  "https://data.cincinnati-oh.gov/resource/rvmt-pkmq.json"
+) |>
+  httr2::req_url_query(
+    "$select" = "crashdate,community_council_neighborhood,crashseverity",
+    "$where" = "crashdate IS NOT NULL",
+    "$order" = "crashdate DESC",
+    "$limit" = 5
+  ) |>
+  httr2::req_perform() |>
+  httr2::resp_body_string() |>
+  jsonlite::fromJSON()
+
+recent_crashes
+
+names(recent_crashes)
+```
+
+```{r authentication}
+
+ohio_jobs = httr2::request(
+  "https://api.stlouisfed.org/fred/series/observations"
+) |>
+  httr2::req_url_query(
+    series_id = "IHLIDXUSOH",
+    api_key = Sys.getenv("FRED_API_KEY"),
+    file_type = "json"
+) |>
+  httr2::req_perform() |>
+  httr2::resp_body_string() |>
+  jsonlite::fromJSON()
+
+names(ohio_jobs)
+```
+
+
+## Question 4: Nested JSON
+
+```{r nested_json_practice}
+job = list(
+  company = "Google",
+  location = "Ohio",
+  salary = list(minimum = 85000, maximum = 125000
+  ),
+  skills = c ("R", "SQL", "Excel")) # character vector, not a nested list
+  
+str(job) # shows how the object is organized, including nested elements
+
+names(job) # reveals names of outer elements
+names(job$salary) # reveals names of elements within salary
+
+job[3][2] # returns NULL
+job$skills[3] # returns "Excel"
+
+#Correct Code
+job[[3]][[2]]
+job$salary$maximum
+job$skills[[2]]
+```
+
+```{r reading_real_json}
+campus = jsonlite::fromJSON( # reads/parses JSON into R object
+  "https://isa401-find-your-seat.vercel.app/campus.json"
+)
+
+class(campus) # identifies the object type
+names(campus) # displays named elements
+str(campus, max.level = 2) # shows the structure, including nested elements
+# max.level = 2 limits how many lnested levels str() displays
+
+fsb = campus$Farmer # or campus[[5]]
+
+names(fsb)
+str(fsb, max.level = 2)
+
+fsb[[8]]
+
+# According to the campus JSON file, how many sections are on the second floor of the Farmer School of Business?
+#AI Answer A
+campus["Farmer"][[8]]$`2`$sections # starts with a one-element list, therefore is wrong (tries to retrieve the 8th element)
+
+#AI Answer B
+campus$Farmer[[8]]$`2`$sections
+
+
+second_floor = campus$Farmer[[8]]$`2`
+
+names(second_floor)
+str(second_floor, max.level = 1)
+
+rooms = second_floor[[3]]
+
+class(rooms)
+dim(rooms)
+names(rooms)
+head(rooms)
+
+# recall, rooms[6,2] means row 6, column 2
+# row[6, "isa_sections"] means row 6, column isa_sections
+
+names(campus)
+names(fsb)
+campus["Farmer"][[8]]$`2`$sections
+campus$Farmer[[8]]$`2`$sections
+
+
+second_floor = campus$Farmer[[8]]$`2`
+rooms = second_floor[[3]]
+
+class(rooms)
+dim(rooms)
+names(rooms)
+rooms[6, "isa_sections"]
+```
+
+
+# Question 3 - Predict R Output
+
+```{r tricky_examples}
+x = c(4, 8, 12, 16)
+names(x) = c("A", "B", "C", "D")
+y = c(TRUE, FALSE, TRUE, FALSE)
+
+x[y] # I think it will result in true
+  # resulted in A / 4, C / 12 , so I guess it's all X that y returns true
+sum(y) # counts all, I think it counts 4
+  # counted 2, so it must be just the true ones
+typeof(x) # I think it will be double
+  # I was right
+x[2:3] # I think it returns 8,12
+  # It returned it with their names B / 8, C / 12
+
+
+a = c(2, 4, 6, 8)
+b = c(10,20)
+c = c(1, "2", 3)
+
+a + b # I think this will return the sum of everything (50)
+  # no, it added the individuals, keeping the list
+typeof(c) # it will be a character
+  # i was right, "2" throws it off
+c[2] # just "2"?
+  # yeah I was right
+c[2] == 2 # no because its text/character
+  # I was wrong, TRUE
+```
+
+
+# Question 1 - Evaluating AI Claims about a Data File
+
+```{r question 1}
+# important skills:
+  # 1) checking actual # of rows, columns
+  # 2) IDing column names and data types
+  # 3) distinguishing character values from numbers
+  # 4) evaluating whether AI accurately describes a dataset
+
+# 4 variables, 4 observations
+employees = data.frame(
+  name = c("Anna", "Ben", "Chris", "Diana"),
+  department = c("Finance", "Marketing", "Finance", "Operations"),
+  salary = c("75000", "82000", "90000", "68000"),
+  remote = c(TRUE, FALSE, TRUE, FALSE)
+)
+
+dplyr::glimpse(employees)
+# the salaries are all characters, we probably want to switch them over to doubles
+mean(employees$remote) # = 0.5, options are 0 or 1
+
+# to calculate the avg salary:
+mean(as.numeric(employees$salary))
+
+nrow(employees)
+ncol(employees)
+
+class(employees)
+typeof(employees$salary)
+typeof(employees$remote)
+
+mean(employees$salary)
+mean(employees$remote)
+```
+
+
+# Questions 8/9 - Tidy vs Technically Correct Data
+
+```{r tidy_technically_correct}
+crashes = data.frame(
+  date = c("29 Jan 2025", "17 Feb 2025", "12 Jun 2025"),
+  location_operator = c(
+    "Washington DC / American Eagle",
+    "Toronto / Delta Connection",
+    "Ahmedabad / Air India"
+  ),
+  fatalities = c("67/67(0)", "0/80(0)", "241/242(19)")
+)
+
+dplyr::glimpse(crashes)
+
+# Question 8: is this data tidy?
+  # 3 rules:
+      # 1) each variable is a column
+      # 2) each observation is a row
+      # 3) each value occupies its own cell
+  # Answer: the dataset is not tidy, as location_operator and fatalities columns have multiple variables
+
+# Question 9: is this dataset technically correct?
+  # in terms of having appropriate column names and types?
+  typeof(crashes$date)
+  # Answer: no, date is a character, should be date, fatalities should be doubles - they should be separated and converted
+```
+
+# Question 10 - Evaluating AI Answer about dplyr
+
+```{r question_10}
+select() # which columns are kept
+filter() # which rows are kept
+mutate() # adds or modifies columns
+group_by() # defines groups for subsequent operations
+summarise() # produces summary values, often one row per group
+arrange() # changes row order
+count() # counts observations by category
+
+# consider this data set
+jobs = data.frame(
+  company = c("ABC", "XYZ", "ABC", "DEF"),
+  state = c("OH", "OH", "KY", "OH"),
+  remote = c(1, 0, 1, 1)
+)
+
+# following code
+jobs |>
+  dplyr::filter(state == "OH") |> # keeps only OHio jobs
+  dplyr::group_by(company) |> # organizes by company
+  dplyr::summarise(remote_share = mean(remote))
+    # one row per company, mean(remote) calculates proportion of jobs with remote = 1 (they are all 100% or 0%)
+```
+
+# Some Helpers on Q1, Q8-10
+
+```{r helpers}
+# Inspect a data frame
+class(df)
+dim(df)
+names(df)
+str(df)
+dplyr::glimpse(df)
+
+# Check particular variables
+typeof(df$column_name)
+class(df$column_name)
+
+# Examine values
+head(df)
+unique(df$column_name)
+
+# Count categories
+dplyr::count(df, column_name)
+
+# Check for missing values
+sum(is.na(df$column_name))
+```
+
+
+# Question 11 - fixing AI-written ellmer code
+
+```{r}
+# important functions
+ellmer::chat_openai() # creates the AI client
+chat$chat_structured() # requests structured info from text
+ellmer::type_object() # defines the fields to extract
+ellmer::type_string() # specifies a text field
+ellmer::type_integer() # specifies an integer field
+ellmer::type_number() # specifies a numeric field (can have decimals)
+
+chat = ellmer::chat_openai( # set up the client
+  model = "gpt-5.6-luna",
+  params = ellmer::params(
+    reasoning_effort = "none"
+  )
+)
+ # extract info from the source text
+course_info = chat$chat_structured(
+  isa125_text,
+  type = ellmer::type_object(  # what fields should appear?
+    name = ellmer::type_string( # begin specifying types
+      "Name of the course"
+    ),
+    credit_hours = ellmer::type_integer(
+      "Number of credit hours"
+    ),
+    prereqs = ellmer::type_string(
+      "Prerequisites for the course",
+      required = FALSE
+    )
+  )
+)
+
+## LLM extractions don't guarantee factual accuracy
+
+```
+
+
+
+# Remaining Questions
+
+```{r remaining}
+Question 2:
+  
+```
+
